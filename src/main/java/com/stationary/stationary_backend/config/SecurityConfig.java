@@ -214,7 +214,15 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(allowedOrigins);
+        // Combine env allowed-origins with wildcards for localhost and Vercel deployments
+        java.util.List<String> patterns = new java.util.ArrayList<>();
+        patterns.add("http://localhost:[*]");
+        patterns.add("https://*.vercel.app");
+        if (allowedOrigins != null) {
+            patterns.addAll(allowedOrigins);
+        }
+        config.setAllowedOriginPatterns(patterns);
+        
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         config.setExposedHeaders(List.of("Authorization")); // headers frontend can read
