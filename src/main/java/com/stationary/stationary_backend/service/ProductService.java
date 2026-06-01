@@ -170,11 +170,14 @@ public class ProductService {
             query.addCriteria(Criteria.where("stock").gt(0));
         }
 
-        // Optional full-text search ($text index on name + tags)
-        // WHY separate TextCriteria? MongoDB $text query must be the first criteria.
-        // TextCriteria tells Mongo to use the text index. Regular Criteria would not.
+        // Optional search query (using safe regex matching on name, description, or tags)
         if (StringUtils.hasText(search)) {
-            query.addCriteria(TextCriteria.forDefaultLanguage().matching(search));
+            String escapedSearch = java.util.regex.Pattern.quote(search);
+            query.addCriteria(new Criteria().orOperator(
+                    Criteria.where("name").regex(escapedSearch, "i"),
+                    Criteria.where("description").regex(escapedSearch, "i"),
+                    Criteria.where("tags").regex(escapedSearch, "i")
+            ));
         }
 
         // ── Execute: count + paginated fetch (2 queries total) ────────────
